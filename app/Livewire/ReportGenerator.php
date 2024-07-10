@@ -11,8 +11,9 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class ReportGenerator extends Component
 {
-    public $data;
+    public $dataVal;
     public $reportPreview;
+    public $data;
 
     // public function mount()
     // {
@@ -86,9 +87,10 @@ class ReportGenerator extends Component
     public function mount()
     {
         // Set the path to the template file correctly
-        $this->templatePath = storage_path('app/public/temp.xlsx');
+        $this->templatePath = storage_path('app/public/Required-Report-Forms.xlsx');
         // Initialize your data or fetch from the database
-        $this->data = $this->fetchReportData();
+        $this->dataVal = $this->fetchReportData();
+        $this->data = $this->readExcelData();
     }
 
     public function fetchReportData()
@@ -99,7 +101,25 @@ class ReportGenerator extends Component
             ['Jane Smith', 150, '2024-01-02']
         ];
     }
+    public function readExcelData()
+    {
+        $spreadsheet = IOFactory::load($this->templatePath);
+        $sheet = $spreadsheet->getActiveSheet();
+        $data = [];
 
+        foreach ($sheet->getRowIterator() as $row) {
+            $rowData = [];
+            $cellIterator = $row->getCellIterator();
+            $cellIterator->setIterateOnlyExistingCells(false); // Loop through all cells, even if they are empty
+
+            foreach ($cellIterator as $cell) {
+                $rowData[] = $cell->getValue();
+            }
+
+            $data[] = $rowData;
+        }
+        return $data;
+    }
     public function generatePreview()
     {
         // Load the template
@@ -108,7 +128,7 @@ class ReportGenerator extends Component
         // Fill in the data
         $sheet = $spreadsheet->getActiveSheet();
         $row = 5; // Assuming data starts at row 2
-        foreach ($this->data as $record) {
+        foreach ($this->dataVal as $record) {
             $sheet->fromArray($record, NULL, 'A' . $row++);
         }
 
@@ -133,7 +153,7 @@ class ReportGenerator extends Component
         // Fill in the data
         $sheet = $spreadsheet->getActiveSheet();
         $row = 5; // Assuming data starts at row 2
-        foreach ($this->data as $record) {
+        foreach ($this->dataVal as $record) {
             $sheet->fromArray($record, NULL, 'A' . $row++);
         }
 
